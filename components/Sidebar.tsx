@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, BookOpen, FileQuestion, GraduationCap, BarChart3, X } from 'lucide-react';
+import { LayoutDashboard, Layers, FileQuestion, GraduationCap, BarChart3, X, Book } from 'lucide-react';
 import { AppView, UserRole } from '../types';
 
 interface SidebarProps {
@@ -13,10 +13,10 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, setIsOpen, role }) => {
   const allMenuItems = [
     { id: AppView.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard, roles: ['TEACHER', 'STUDENT'] },
-    { id: AppView.INGESTION, label: 'Ingestion Engine', icon: BookOpen, roles: ['TEACHER'] },
-    { id: AppView.ASSESSMENT, label: role === 'TEACHER' ? 'Quiz Generator' : 'Assignments', icon: FileQuestion, roles: ['TEACHER', 'STUDENT'] },
-    { id: AppView.GRADING, label: 'Vision Grading', icon: GraduationCap, roles: ['TEACHER'] },
-    { id: AppView.ANALYTICS, label: role === 'TEACHER' ? 'Class Analytics' : 'My Progress', icon: BarChart3, roles: ['TEACHER', 'STUDENT'] },
+    { id: AppView.MATERIAL_FACTORY, label: 'Material Factory', icon: Layers, roles: ['TEACHER'] },
+    { id: AppView.ASSESSMENTS, label: role === 'TEACHER' ? 'Quiz Generator' : 'My Assessments', icon: FileQuestion, roles: ['TEACHER', 'STUDENT'] },
+    { id: AppView.GRADING_QUEUE, label: 'Marking Factory', icon: GraduationCap, roles: ['TEACHER'] },
+    { id: AppView.ANALYTICS, label: role === 'TEACHER' ? 'Class Mastery' : 'My Progress', icon: BarChart3, roles: ['TEACHER', 'STUDENT'] },
   ];
 
   const menuItems = allMenuItems.filter(item => item.roles.includes(role));
@@ -38,7 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
       `}>
         <div className="flex items-center justify-between h-16 px-6 bg-slate-950">
           <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-            EduNexus AI
+            EduNexus
           </span>
           <button onClick={() => setIsOpen(false)} className="lg:hidden text-slate-400 hover:text-white">
             <X size={24} />
@@ -46,9 +46,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
         </div>
 
         <div className="px-6 py-4">
-             <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Current Portal</div>
-             <div className="bg-slate-800 rounded px-3 py-1 text-sm font-medium text-indigo-300 border border-slate-700">
-                {role === 'TEACHER' ? 'Teacher Admin' : 'Student Portal'}
+             <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Portal</div>
+             <div className="bg-slate-800 rounded px-3 py-1 text-sm font-medium text-indigo-300 border border-slate-700 flex items-center gap-2">
+                {role === 'TEACHER' ? <GraduationCap size={14}/> : <Book size={14}/>}
+                {role === 'TEACHER' ? 'Teacher Admin' : 'Student Learner'}
              </div>
         </div>
 
@@ -78,13 +79,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
 
         <div className="absolute bottom-0 w-full p-4 bg-slate-950">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-xs font-bold">
+            <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-xs font-bold text-white">
               AI
             </div>
             <div>
               <p className="text-sm font-medium text-white">System Status</p>
               <p className="text-xs text-green-400 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-green-400"></span>
                 Online
               </p>
             </div>
