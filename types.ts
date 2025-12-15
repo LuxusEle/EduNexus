@@ -22,15 +22,19 @@ export interface Tenant {
   plan: 'FREE' | 'PRO' | 'ENTERPRISE';
 }
 
+export interface ClassSettings {
+  educationSystem: 'EDEXCEL' | 'CAMBRIDGE' | 'SRI_LANKA_LOCAL' | 'IB';
+  language: 'ENGLISH' | 'SINHALA' | 'TAMIL' | 'HYBRID';
+  gradeLevel: string; // "10", "11", "12", "A-Level"
+  aiMarkingEnabled: boolean;
+}
+
 export interface ClassGroup {
   id: string;
   tenantId: string;
   name: string;
   teacherIds: string[];
-  settings: {
-    aiMarkingEnabled: boolean;
-    language: string;
-  };
+  settings: ClassSettings;
 }
 
 export interface SourceSet {
@@ -70,9 +74,13 @@ export interface LessonPack {
 }
 
 export interface Slide {
+  id: string;
   topic: string;
-  content: string[];
-  imagePrompt: string;
+  content: string[]; // Detailed bullet points, can contain LaTeX
+  equations?: string[]; // LaTeX strings
+  diagramDescription: string; // For AI generation
+  webResources?: { title: string; url: string }[]; // AI suggested links
+  teacherNotes?: string;
 }
 
 export interface StudyPlan {
@@ -105,6 +113,7 @@ export interface Quiz {
   rubricId?: string;
   dueDate?: string;
   generatedDate: string;
+  deliveryMode: 'DIGITAL' | 'HYBRID_UPLOAD' | 'PAPER';
 }
 
 export interface QuizQuestion {
@@ -181,6 +190,35 @@ export interface GradingResult {
     nextPractice: { skillCode: string; suggestion: string }[];
   };
   safeForStudent: boolean;
+}
+
+export interface StudentPoke {
+  id: string;
+  studentId: string;
+  topic: string;
+  message: string;
+  timestamp: string;
+  status: 'PENDING' | 'RESOLVED';
+}
+
+export interface ParentInsight {
+  studentId: string;
+  predictedGrade: string;
+  weakAreas: string[];
+  teacherApproved: boolean;
+  suggestedResources: string[];
+  lastUpdated: string;
+}
+
+// New Interface for hierarchical analysis
+export interface AnalysisResult {
+  topic: string;
+  weight: 'High' | 'Medium' | 'Low'; // For Learning Map visualization
+  objectives: {
+      id: string;
+      main: string;
+      subPoints: string[]; // Indepth details
+  }[];
 }
 
 export enum AppView {

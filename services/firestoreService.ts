@@ -1,9 +1,10 @@
+
 import { db, auth } from '../firebaseConfig';
 import { 
   collection, getDocs, addDoc, query, where, doc, getDoc, updateDoc, setDoc, Timestamp 
 } from 'firebase/firestore';
 import { 
-  ClassGroup, SourceSet, LessonPack, Quiz, Attempt, Response, GradingResult, Source 
+  ClassGroup, SourceSet, LessonPack, Quiz, Attempt, Response, GradingResult, Source, StudentPoke, ParentInsight, ClassSettings 
 } from '../types';
 
 // Helper to handle dates
@@ -13,11 +14,7 @@ export const firestoreService = {
   // --- Sources & Materials ---
   async getSourceSets(classId: string): Promise<SourceSet[]> {
     try {
-      // PROD: const q = query(collection(db, 'sourceSets'), where('classId', '==', classId));
-      // PROD: const snapshot = await getDocs(q);
-      // PROD: return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as SourceSet));
-      
-      // MOCK for Demo (Simulating Firestore Latency)
+      // MOCK for Demo
       const stored = localStorage.getItem(`edunexus_sources_${classId}`);
       return stored ? JSON.parse(stored) : [];
     } catch (e) {
@@ -28,10 +25,6 @@ export const firestoreService = {
 
   async createSourceSet(sourceSet: Omit<SourceSet, 'id'>): Promise<string> {
     try {
-      // PROD: const docRef = await addDoc(collection(db, 'sourceSets'), sourceSet);
-      // PROD: return docRef.id;
-      
-      // MOCK
       const id = 'ss_' + Date.now();
       const newSet = { ...sourceSet, id };
       const current = await firestoreService.getSourceSets(sourceSet.classId);
@@ -59,6 +52,27 @@ export const firestoreService = {
     localStorage.setItem(`edunexus_lessons_${pack.classId}`, JSON.stringify(current));
   },
 
+  // --- Classes & Settings ---
+  async updateClassSettings(classId: string, settings: ClassSettings): Promise<void> {
+      // Mock saving settings
+      localStorage.setItem(`edunexus_settings_${classId}`, JSON.stringify(settings));
+      console.log(`Settings saved for ${classId}`, settings);
+  },
+
+  async getClassSettings(classId: string): Promise<ClassSettings | null> {
+      const stored = localStorage.getItem(`edunexus_settings_${classId}`);
+      return stored ? JSON.parse(stored) : null;
+  },
+
+  async getStudentClasses(studentId: string): Promise<{id: string, name: string}[]> {
+      // Mock enrollment data
+      return [
+          { id: 'physics_101', name: 'Physics (Edexcel A-Level)' },
+          { id: 'maths_pure', name: 'Pure Mathematics' },
+          { id: 'chem_organic', name: 'Organic Chemistry' }
+      ];
+  },
+
   // --- Quizzes & Attempts ---
   async getQuizzes(classId: string): Promise<Quiz[]> {
     const stored = localStorage.getItem(`edunexus_quizzes_${classId}`);
@@ -66,24 +80,20 @@ export const firestoreService = {
   },
 
   async createQuiz(quiz: Quiz): Promise<void> {
-    const current = await firestoreService.getQuizzes(quiz.classId);
-    localStorage.setItem(`edunexus_quizzes_${quiz.classId}`, JSON.stringify([...current, quiz]));
+    const current = await firestoreService.getQuizzes(quiz.classId || 'demo_class');
+    localStorage.setItem(`edunexus_quizzes_${quiz.classId || 'demo_class'}`, JSON.stringify([...current, quiz]));
   },
 
   async getAttempts(classId: string): Promise<Attempt[]> {
-    // In real app, query by class via quiz relation
     const stored = localStorage.getItem('edunexus_attempts');
     const allAttempts: Attempt[] = stored ? JSON.parse(stored) : [];
-    // Filter logic would go here
     return allAttempts;
   },
 
   async submitAttempt(attempt: Attempt, responses: Response[]): Promise<void> {
-    // Save Attempt
     const allAttempts = await firestoreService.getAttempts('');
     localStorage.setItem('edunexus_attempts', JSON.stringify([...allAttempts, attempt]));
     
-    // Save Responses
     const storedRes = localStorage.getItem('edunexus_responses');
     const allRes = storedRes ? JSON.parse(storedRes) : [];
     localStorage.setItem('edunexus_responses', JSON.stringify([...allRes, ...responses]));
@@ -94,9 +104,7 @@ export const firestoreService = {
     const storedRes = localStorage.getItem('edunexus_responses');
     const allRes: Response[] = storedRes ? JSON.parse(storedRes) : [];
     
-    // Join logic: find responses where grading confidence is low or flagged
     const needsReview: {attempt: Attempt, response: Response}[] = [];
-    
     allRes.forEach(r => {
       if (r.grading && (r.grading.confidence < 0.8 || r.grading.flags.length > 0)) {
         const attempt = allAttempts.find(a => a.id === r.attemptId);
@@ -105,14 +113,30 @@ export const firestoreService = {
         }
       }
     });
-    
     return needsReview;
   },
 
-  async updateGrading(responseId: string, grading: GradingResult): Promise<void> {
-    const storedRes = localStorage.getItem('edunexus_responses');
-    let allRes: Response[] = storedRes ? JSON.parse(storedRes) : [];
-    allRes = allRes.map(r => r.id === responseId ? { ...r, grading } : r);
-    localStorage.setItem('edunexus_responses', JSON.stringify(allRes));
+  // --- Student Pokes & Insights ---
+  async sendStudentPoke(poke: StudentPoke): Promise<void> {
+      const stored = localStorage.getItem('edunexus_pokes');
+      const current = stored ? JSON.parse(stored) : [];
+      localStorage.setItem('edunexus_pokes', JSON.stringify([...current, poke]));
+  },
+
+  async getPokesForTeacher(): Promise<StudentPoke[]> {
+      const stored = localStorage.getItem('edunexus_pokes');
+      return stored ? JSON.parse(stored) : [];
+  },
+
+  async getParentInsights(studentId: string): Promise<ParentInsight | null> {
+      // Mock Data
+      return {
+          studentId,
+          predictedGrade: 'A-',
+          weakAreas: ['Thermodynamics', 'Integration'],
+          teacherApproved: true,
+          suggestedResources: ['Khan Academy: Entropy', 'Past Paper 2019 Q4'],
+          lastUpdated: now()
+      };
   }
 };
