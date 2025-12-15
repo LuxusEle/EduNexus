@@ -1,3 +1,5 @@
+export type UserRole = 'TEACHER' | 'STUDENT';
+
 export interface CourseMaterial {
   id: string;
   name: string;
@@ -29,6 +31,7 @@ export interface StudyWeek {
   topic: string;
   objectives: string[];
   keyPoints: string[]; // For presentation slides
+  slideImagePrompt: string; // Description for AI image generation
 }
 
 export interface StudyPlan {

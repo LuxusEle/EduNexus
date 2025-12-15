@@ -2,23 +2,27 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Quiz, GradingResult, StudyPlan } from "../types";
 
 // Initialize Gemini Client
-// NOTE: Process.env.API_KEY is handled by the environment as per instructions.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const MODEL_NAME = "gemini-2.5-flash";
 
 /**
- * Generates a structured study plan JSON.
+ * Generates a structured study plan JSON with image prompts for slides.
  */
 export const generateStudyPlan = async (content: string, topic: string): Promise<StudyPlan | null> => {
   try {
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: `You are an expert academic curriculum planner. 
-      Based on the following course material content, generate a structured week-by-week study plan for the topic: "${topic}".
       
-      Course Material Content:
-      ${content.substring(0, 10000)}... 
+      Instructions:
+      1. Analyze the provided "Target Subject" and "Available Source Materials".
+      2. Since full document content might be unavailable (simulated), strictly infer the curriculum topics from the file names provided in the source materials and the user's target subject.
+      3. Generate a structured week-by-week study plan that matches the ${topic} subject.
+      4. For each week (slide), provide a visual image description (slideImagePrompt) that represents the key concept.
+
+      Input Data:
+      ${content.substring(0, 15000)}... 
       
       Return the output in JSON format.`,
       config: {
@@ -36,7 +40,8 @@ export const generateStudyPlan = async (content: string, topic: string): Promise
                   weekNumber: { type: Type.INTEGER },
                   topic: { type: Type.STRING },
                   objectives: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  keyPoints: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Short bullet points suitable for a presentation slide" }
+                  keyPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  slideImagePrompt: { type: Type.STRING, description: "A detailed visual description of an image to illustrate this slide, approx 15 words." }
                 }
               }
             }
@@ -56,6 +61,62 @@ export const generateStudyPlan = async (content: string, topic: string): Promise
     return null;
   } catch (error) {
     console.error("Error generating study plan:", error);
+    return null;
+  }
+};
+
+/**
+ * Updates an existing study plan based on user chat input.
+ */
+export const updateStudyPlan = async (currentPlan: StudyPlan, userInstruction: string): Promise<StudyPlan | null> => {
+  try {
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: `You are an AI assistant helping a teacher edit a study plan/presentation.
+      
+      Current Plan JSON:
+      ${JSON.stringify(currentPlan)}
+
+      User Instruction:
+      "${userInstruction}"
+
+      Modify the JSON to satisfy the user's request. Maintain the same schema. Return the full updated JSON.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            contextSummary: { type: Type.STRING },
+            weeks: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  weekNumber: { type: Type.INTEGER },
+                  topic: { type: Type.STRING },
+                  objectives: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  keyPoints: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  slideImagePrompt: { type: Type.STRING }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (response.text) {
+      const data = JSON.parse(response.text);
+      return {
+        ...currentPlan,
+        ...data,
+        id: currentPlan.id // Keep same ID
+      } as StudyPlan;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error updating study plan:", error);
     return null;
   }
 };

@@ -1,22 +1,25 @@
 import React from 'react';
-import { LayoutDashboard, BookOpen, FileQuestion, GraduationCap, BarChart3, Menu, X } from 'lucide-react';
-import { AppView } from '../types';
+import { LayoutDashboard, BookOpen, FileQuestion, GraduationCap, BarChart3, X } from 'lucide-react';
+import { AppView, UserRole } from '../types';
 
 interface SidebarProps {
   currentView: AppView;
   onChangeView: (view: AppView) => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  role: UserRole;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, setIsOpen }) => {
-  const menuItems = [
-    { id: AppView.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
-    { id: AppView.INGESTION, label: 'Ingestion Engine', icon: BookOpen },
-    { id: AppView.ASSESSMENT, label: 'Quiz Generator', icon: FileQuestion },
-    { id: AppView.GRADING, label: 'Vision Grading', icon: GraduationCap },
-    { id: AppView.ANALYTICS, label: 'Student Analytics', icon: BarChart3 },
+const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, setIsOpen, role }) => {
+  const allMenuItems = [
+    { id: AppView.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard, roles: ['TEACHER', 'STUDENT'] },
+    { id: AppView.INGESTION, label: 'Ingestion Engine', icon: BookOpen, roles: ['TEACHER'] },
+    { id: AppView.ASSESSMENT, label: role === 'TEACHER' ? 'Quiz Generator' : 'Assignments', icon: FileQuestion, roles: ['TEACHER', 'STUDENT'] },
+    { id: AppView.GRADING, label: 'Vision Grading', icon: GraduationCap, roles: ['TEACHER'] },
+    { id: AppView.ANALYTICS, label: role === 'TEACHER' ? 'Class Analytics' : 'My Progress', icon: BarChart3, roles: ['TEACHER', 'STUDENT'] },
   ];
+
+  const menuItems = allMenuItems.filter(item => item.roles.includes(role));
 
   return (
     <>
@@ -42,7 +45,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
           </button>
         </div>
 
-        <nav className="p-4 space-y-2">
+        <div className="px-6 py-4">
+             <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Current Portal</div>
+             <div className="bg-slate-800 rounded px-3 py-1 text-sm font-medium text-indigo-300 border border-slate-700">
+                {role === 'TEACHER' ? 'Teacher Admin' : 'Student Portal'}
+             </div>
+        </div>
+
+        <nav className="px-4 space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
@@ -50,8 +60,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
               <button
                 key={item.id}
                 onClick={() => {
-                  onChangeView(item.id);
-                  setIsOpen(false); // Close on mobile select
+                  onChangeView(item.id as AppView);
+                  setIsOpen(false);
                 }}
                 className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
                   isActive 

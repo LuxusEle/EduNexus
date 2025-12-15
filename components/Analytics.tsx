@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ReferenceLine } from 'recharts';
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ReferenceLine } from 'recharts';
 import { TrendingUp, AlertOctagon, Clock, RefreshCw } from 'lucide-react';
 import { dataStore } from '../utils/dataStore';
 import { QuizResult } from '../types';
@@ -117,7 +117,7 @@ const Analytics: React.FC = () => {
                         <ReferenceLine y={0} stroke="#000" />
                         <Bar dataKey="zScore" fill="#4f46e5" name="Z-Score" radius={[4, 4, 0, 0]}>
                           {zScoreData.map((entry, index) => (
-                             <cell key={`cell-${index}`} fill={entry.zScore >= 0 ? '#4f46e5' : '#ef4444'} />
+                             <Cell key={`cell-${index}`} fill={entry.zScore >= 0 ? '#4f46e5' : '#ef4444'} />
                           ))}
                         </Bar>
                     </BarChart>

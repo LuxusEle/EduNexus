@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, BrainCircuit, BookOpen, AlertCircle, Play, Check, X, Trophy, Save } from 'lucide-react';
+import { Loader2, BrainCircuit, BookOpen, Play, Trophy, Save } from 'lucide-react';
 import { generateQuiz } from '../services/geminiService';
-import { Quiz, QuizResult, StudyPlan } from '../types';
+import { Quiz, QuizResult, StudyPlan, UserRole } from '../types';
 import { dataStore } from '../utils/dataStore';
 
-const QuizGen: React.FC = () => {
+interface QuizGenProps {
+  initialPlanId?: string;
+  role: UserRole;
+}
+
+const QuizGen: React.FC<QuizGenProps> = ({ initialPlanId, role }) => {
   const [activeTab, setActiveTab] = useState<'generate' | 'take'>('generate');
   
   // Generation State
@@ -24,7 +29,17 @@ const QuizGen: React.FC = () => {
   useEffect(() => {
     setSavedPlans(dataStore.getPlans());
     setAvailableQuizzes(dataStore.getQuizzes());
-  }, []);
+
+    if (role === 'STUDENT') {
+        setActiveTab('take');
+    }
+    
+    // Handle Navigation from Ingestion
+    if (initialPlanId) {
+        setActiveTab('generate');
+        setSelectedPlanId(initialPlanId);
+    }
+  }, [initialPlanId, role]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +66,7 @@ const QuizGen: React.FC = () => {
       setAvailableQuizzes(dataStore.getQuizzes());
       setPreviewQuiz(null);
       setTopic('');
-      setActiveTab('take');
+      if (role === 'STUDENT') setActiveTab('take');
     }
   };
 
@@ -96,25 +111,29 @@ const QuizGen: React.FC = () => {
        <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Assessment Engine</h2>
-          <p className="text-slate-500 mt-1">Generate AI quizzes or take existing ones to track progress.</p>
+          <p className="text-slate-500 mt-1">
+             {role === 'TEACHER' ? 'Generate AI quizzes for your class.' : 'Take quizzes to track your progress.'}
+          </p>
         </div>
         <div className="flex bg-slate-100 p-1 rounded-lg">
-          <button 
-            onClick={() => setActiveTab('generate')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'generate' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-          >
-            Teacher: Generate
-          </button>
+          {role === 'TEACHER' && (
+              <button 
+                onClick={() => setActiveTab('generate')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'generate' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                Generator
+              </button>
+          )}
           <button 
              onClick={() => setActiveTab('take')}
              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'take' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
-            Student: Take Quiz
+            Quiz Library
           </button>
         </div>
       </div>
 
-      {activeTab === 'generate' && (
+      {activeTab === 'generate' && role === 'TEACHER' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-1 space-y-6">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
@@ -203,7 +222,7 @@ const QuizGen: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {availableQuizzes.length === 0 ? (
              <div className="col-span-full py-12 text-center bg-white rounded-xl border border-slate-200 text-slate-500">
-               No quizzes available. Go to the generator tab to create one.
+               No quizzes available. {role === 'TEACHER' ? 'Go to the generator tab to create one.' : 'Ask your teacher to assign one.'}
              </div>
           ) : (
             availableQuizzes.map(quiz => (
