@@ -1,0 +1,5 @@
+{
+  "name": "EduNexus AI",
+  "description": "A comprehensive AI-powered tuition module featuring RAG-based study planning, automated quiz generation, and computer vision grading.",
+  "requestFramePermissions": []
+}
